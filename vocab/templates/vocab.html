@@ -73,31 +73,55 @@
          <br />
          <div class="row">
             <div class="col-xs-6 text-center">
-               <form id="entry" method="POST" action="/_check">
+               <form id="entry" onSubmit="return false;">
                   <label for="attempt">Word:</label>
                   <input id="attempt" name="attempt" type="text" width="15"
                      autocomplete="off"  autofocus />
-                  <input type="submit" name="try" />
                </form>
             </div>
          </div>
          <br />
-         {% if session.matches|length is not equalto 0  %}
+         <p id="response"> </p>
+
          <h2>You found </h2>
          <p id="results">
-            {% for match in session.matches %}
-            {{ match }}
-            {% endfor %}
          </p>
-         {% endif %}
-         {% with messages = get_flashed_messages() %}
-         {% if messages %}
          <!-- Mismatch, already found, etc. "flashed" from Python -->
-         {% for message in messages %}
-         <p class="message">{{ message }}</p>
-         {% endfor %}
-         {% endif %}
-         {% endwith %}
+         <script>
+            $("#entry").submit( function(event) {
+               event.preventDefault();
+              });
+            $("#attempt").keyup(function(event) {
+               var txt = $("#attempt").val();  // Current content of the input field
+               var keycode = event.which;      // They key that just went up
+               var letter = String.fromCharCode(keycode);
+               if (! "ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(letter)) { return }
+               $.getJSON( "/_check", { text: txt },
+                          function(data) {
+                            rsval = data.result.confirm_word;
+                            console.log("rsval: " + rsval)
+                            if (rsval == 1) {
+                               $("#response").html("Correct!");
+                               $("#results").append(txt + " ")
+                               $("#attempt").val("");
+                            }
+                            if (rsval == 3) {
+                               $("#response").html("Not a word in the vocabulary!");
+                            }
+                            if (rsval == 4) {
+                               $("#response").html("Word can't be made from the anagram!");
+                            }
+                            if (rsval == 2) {
+                               $("#response").html("Word already found!");
+                            }
+                            if (rsval == 0) {
+                               window.location.replace("/success");
+                            }
+                           }
+                        );
+               });
+            
+         </script>
       </div>
       <!-- container -->
    </body>
